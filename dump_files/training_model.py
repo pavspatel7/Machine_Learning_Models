@@ -10,15 +10,18 @@ df['Encoding'] = df['Encoding'].apply(ast.literal_eval)
 column_values_encoding = df['Encoding'].tolist()
 column_values_status = df['Status'].tolist()
 
-# print(column_values_encoding, column_values_status)
-# training_model(np.array(column_values_encoding), np.array(column_values_status))
-weight = np.random.uniform(-0.5, 0.5, features)
 
-# print("start before")
-# logistic_model(encoding=column_values_encoding, target=column_values_status, weight=weight)
+weight = np.random.uniform(0, 0, features)
+
 print("Training")
-weight, x,y , bias = training_model(encoding=column_values_encoding, weight= weight, target=column_values_status, epoch=50, alpha=0.01)
-# print("After")
+
+df = pd.read_excel('encoding_validation.xlsx')
+df['Encoding'] = df['Encoding'].apply(ast.literal_eval)
+encoding_v = df['Encoding'].tolist()
+status_v = df['Status'].tolist()
+
+weight, x,y , bias = training_model(encoding=column_values_encoding, weight= weight, target=column_values_status, epoch=100, alpha=0.01, validation_x=encoding_v, validation_y=status_v)
+
 
 N_weight = weight
 N_bias = bias
@@ -29,6 +32,6 @@ df['Encoding'] = df['Encoding'].apply(ast.literal_eval)
 column_values_encoding = df['Encoding'].tolist()
 column_values_status = df['Status'].tolist()
 
-x,y = test_model(encoding=column_values_encoding, target=column_values_status, weight=N_weight, bias= N_bias)
+x,y, avg = test_model(encoding=column_values_encoding, target=column_values_status, weight=N_weight, bias= N_bias)
 
 
