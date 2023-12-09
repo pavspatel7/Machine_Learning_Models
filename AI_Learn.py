@@ -186,7 +186,21 @@ class LogisticRegression():
 
 
 class SoftMax_regression():
-    pass
+
+    def training_model(self):
+        pass
+
+    def testing_model(self):
+        pass
+
+    def sigmoid_function(self):
+        pass
+
+    def cross_entropy_loss(self):
+        pass
+
+    def gradient_descent(self):
+        pass
 
 
 
