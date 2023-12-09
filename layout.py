@@ -1,4 +1,7 @@
 import random
+import AI_Learn
+import pandas as pd
+logistic_reg = AI_Learn.LogisticRegression()
 
 # 🟦
 # 🟩
@@ -35,7 +38,7 @@ class creatingLayout():
                 print(''.join(x))
             print()
 
-        print(self.color_combinations)
+        # print(self.color_combinations)
         return self.grid #, self.wiredGrid_status_is
 
     def getRow(self, D):
@@ -71,3 +74,29 @@ class creatingLayout():
     def find_indexes(self, givenList, target_color):
         indexes = [index for index, (color, _) in enumerate(givenList) if color == target_color]
         return indexes[0]
+
+
+def generate_data(dataSet , gridSize, trainingSize, testSize):
+    result_list = []
+    try :
+        for i in range(dataSet):
+            # print("-------------------------------------------------")
+            layout = creatingLayout()
+            grid = layout.wiredGrid(gridSize)
+            status = layout.wiredGrid_status_is()
+            result_dict = {'Encoding': logistic_reg.encoding(grid), 'Status': status}
+            result_list.append(result_dict)
+
+            if i == 3999:
+                result_df = pd.DataFrame(result_list)
+                result_df.to_excel('DataSets/encoding_results.xlsx', index=False)
+                result_list = []
+
+            if i == dataSet - 1:
+                result_df = pd.DataFrame(result_list)
+                result_df.to_excel('DataSets/encoding_test.xlsx', index=False)
+    
+    except Exception as e:
+        print("Error in Layout ", e)
+
+    print("Data Generated !!")    
