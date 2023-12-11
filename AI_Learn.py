@@ -1,34 +1,44 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import ast
+import math
 
-# weight = np.random.uniform(-0.5, 0.5, features)
+# Colors One Hot Encoding dictionary
+
+color_mapping = {
+                '⬜️': [ 0, 0, 0, 0 ],
+                '🟥': [ 0, 0, 0, 1 ],
+                '🟨': [ 0, 0, 1, 0 ],
+                '🟦': [ 0, 1, 0, 0 ],
+                '🟩': [ 1, 0, 0, 0 ]    
+                }
+
+# Image Pixel into One Hot Encoding
+def encoding(grid):
+    global color_mapping
+    # Storing all encodings into result list
+    result = []
+    # First value of vector to be 1
+    result.append(1)
+    # iterating through grid and encoding ecah pixel (cell)
+    for row in grid:
+        for cell in row:
+            # To get an 1D array using extend
+            result.extend(color_mapping.get(cell, [ 0, 0, 0, 0]))
+    return result
+
+
+def order_encoding(color_order):
+    global color_mapping
+    binary = []
+    get_color  = color_order[2][0]
+    binary.extend(color_mapping.get(get_color, [ 0, 0, 0, 0]))
+    return binary
+    
 
 
 class LogisticRegression():
-
-    # Image Pixel into One Hot Encoding
-    def encoding(self, grid):
-        # Colors One Hot Encoding dictionary
-        color_mapping = {
-                        
-                        '⬜️': [ 0, 0, 0, 0 ],
-                        '🟥': [ 0, 0, 0, 1 ],
-                        '🟨': [ 0, 0, 1, 0 ],
-                        '🟦': [ 0, 1, 0, 0 ],
-                        '🟩': [ 1, 0, 0, 0 ]
-                        
-                        }
-        # Storing all encodings into result list
-        result = []
-        # First value of vector to be 1
-        result.append(1)
-        # iterating through grid and encoding ecah pixel (cell)
-        for row in grid:
-            for cell in row:
-                # To get an 1D array using extend
-                result.extend(color_mapping.get(cell, [ 0, 0, 0, 0]))
-        return result
 
     """
     Training Model:
@@ -38,13 +48,14 @@ class LogisticRegression():
         Implementations:
 
     """
-    def training_model(self, X_Train, Y_Train, epoch, learning_rate, weight_no  , debug):
+    def training_model(self, X_Train, Y_Train, X_Test, Y_Test, epoch, learning_rate, weight_no  , debug):
         
         x_axis = []
-        y_axis = []
+        y_axis_train = []
+        y_axis_test = []
+        test_accuracy = []
+        train_accuracy  = []
         weight = np.random.uniform(-weight_no, weight_no, len(X_Train[0]))
-        bestWeight = []
-        validateAccuracy = 0
 
         # Training Data for each epoch
         for e in range(epoch):
@@ -61,8 +72,8 @@ class LogisticRegression():
             each_epoch_loss = []
             # Counting number of correct prediction from the training data set
             correct_prediction_count = 0
-            # Calculating acurracy of correct prediction out of given training set
-            accuracy_of_correct_prediction  = 0
+            train_accuracy_epoch = 0
+            
 
             print("--------------------------------------------------------------")
 
@@ -78,18 +89,28 @@ class LogisticRegression():
                 each_epoch_loss.append(loss)
                 # Updating Weight using the Stochastic gradient descent
                 weight = self.gradient_descent(x, t, prediction, learning_rate, weight)
+            
                 
             # Calculate accuracy of correct prediction of training set
-            accuracy_of_correct_prediction  = correct_prediction_count / len(Y_Train)
+            train_accuracy_epoch  = correct_prediction_count / len(Y_Train)
+            train_accuracy.append(correct_prediction_count / len(Y_Train))
+            
             # Appending number of epochs to x_axis values
             x_axis.append(e)
             # Appending number of average loss for each epoch. 
-            y_axis.append(sum(each_epoch_loss) / len(each_epoch_loss))
-
-            if debug:
-                print(f"Loss: { float( y_axis[e]) } at time {e}  Accuracy: {accuracy_of_correct_prediction }")
+            y_axis_train.append( sum(each_epoch_loss) / len(each_epoch_loss))
             
-        return weight, x_axis, y_axis
+            test_loss, temp_test_accuracy = self.test_model(encoding=X_Test , target= Y_Test, weight = weight)
+            
+            test_accuracy.append(temp_test_accuracy)
+            y_axis_test.append(test_loss)
+            
+            if debug:
+                print(f"Loss: { float( y_axis_train[e]) } at time {e}  Accuracy: {train_accuracy_epoch }")
+            
+            
+            
+        return weight, x_axis , y_axis_train , train_accuracy,  y_axis_test  , test_accuracy
 
     # Classiication of prediction
     def classified_values(self, prediction):
@@ -103,8 +124,8 @@ class LogisticRegression():
 
     # Testing Model Method
     def test_model(self, encoding, target, weight):
-        new_y = []
-        new_x = []
+        y_axis_test = []
+        # x_axis_test = []
         i = 0
         TrueCount = 0
 
@@ -117,13 +138,14 @@ class LogisticRegression():
             # Calculate the loss on the data point of X vector, of prediction from target
             loss = self.cross_entropy_loss(s, prediction)
 
-            new_y.append(loss)
-            new_x.append(i)
+            y_axis_test.append(loss)
+            # x_axis_test.append(i)
             i+=1
 
-        avg = TrueCount / len(target)
-        print(f"Accuracy for Testing Set {avg}")
-        return new_x, new_y, avg
+        avg_loss = sum(y_axis_test) / len(y_axis_test)
+        avg_accuracy = TrueCount / len(target)
+        print(f"Accuracy for Testing Set {avg_accuracy}")
+        return avg_loss, avg_accuracy
 
     # Sigmoid Function: 
     def sigmoid_function(self, weight, x_vector):
@@ -174,7 +196,7 @@ class LogisticRegression():
         return noisy_vector
 
 
-    def plot_loss(self, x_axis_train, y_axis_train, x_axis_test, y_axis_test):
+    def plot_loss(self, x_axis_train, y_axis_train, x_axis_test, y_axis_test, ):
         plt.plot(x_axis_test, y_axis_test, label="Testing Loss")
         plt.plot(x_axis_train, y_axis_train, label="Training Loss")
         plt.xlabel('Epoch')
@@ -185,86 +207,143 @@ class LogisticRegression():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class SoftMax_regression():
-
-    def training_model(self):
-        pass
-
-    def testing_model(self):
-        pass
-
-    def sigmoid_function(self):
-        pass
-
-    def cross_entropy_loss(self):
-        pass
-
-    def gradient_descent(self):
-        pass
-
-
-
-
-
-# def training_model(encoding, target, weight, epoch, alpha, lambda_reg, validation_x, validation_y, patience):
-#     best_weight = None
-#     validate_accuracy = 0
-#     best_loss = float('inf')
-#     no_improvement_count = 0
-
-#     for e in range(epoch):
-#         combined_data = list(zip(encoding, target))
-#         random.shuffle(combined_data)
-#         encoded_x_values, target_y_values = zip(*combined_data) 
-#         each_epoch_loss = []
-#         true_count = 0
-
-#         for x, t in zip(encoded_x_values, target_y_values):
-#             x = add_noise(np.array(x), 0.01)
-#             prediction = sigmoid_function(weight, x)
-#             true_count += 1 if classified_values(prediction) == t else 0
-#             loss = cross_entropy_loss(t, prediction)
-#             each_epoch_loss.append(loss)
-#             weight = gradient_descent(x, t, prediction, alpha, weight, lambda_reg)
+    
+    def training_model(self, X_Train, Y_Train, X_Test, Y_Test, epoch, learning_rate, weight_no, debug):
         
-#         avg_loss = sum(each_epoch_loss) / len(each_epoch_loss)
-#         avg_accuracy = true_count / len(target)
-#         print(f"Epoch {e}: Loss = {avg_loss}, Accuracy = {avg_accuracy}")
+        #GBYR
+        
+        weight_yellow = np.random.uniform(-weight_no, weight_no, len(X_Train[0]))
+        weight_green = np.random.uniform(-weight_no, weight_no, len(X_Train[0]))
+        weight_red = np.random.uniform(-weight_no, weight_no, len(X_Train[0]))
+        weight_blue = np.random.uniform(-weight_no, weight_no, len(X_Train[0]))
+        # decay_rate = 0.1
+        for e in range(epoch):
+            
+            # learning_rate = learning_rate / (1 + epoch * decay_rate)
+            
+            # Create variable containes X vector and Y vector of Training Data Set. 
+            combined_data = list(zip(X_Train, Y_Train))
+            # Perform random Shuffle in combined data
+            # Avoiding training model in sequence
+            random.shuffle(combined_data)
+            # unzip Data 
+            encoding_shuffled, target_shuffled = zip(*combined_data)
+            each_epoch_loss = []
+            correct_prediction_count = 0
+            # Calculating acurracy of correct prediction out of given training set
+            accuracy_of_correct_prediction  = 0
+            
+            for x_vector , y_vector in zip( encoding_shuffled, target_shuffled ):
+                
+                prediction_list = self.softmax_function(weight_blue, weight_yellow, weight_green, weight_red , x_vector )
+                correct_prediction_count += 1  if np.argmax(prediction_list) == np.argmax(y_vector) else 0
+                loss = self.cross_entropy_loss( prediction_list , y_vector)
+                each_epoch_loss.append(loss)
+                weight_green , weight_blue , weight_yellow, weight_red = self.gradient_descent(weight_blue, weight_yellow, weight_green, weight_red, x_vector, learning_rate, prediction_list, y_vector)
 
-#         val_loss, val_accuracy = validate_model(validation_x, validation_y, weight)
-#         # print(f"validation loss {val_loss} , accuracy {val_accuracy}")
-#         if val_loss < best_loss:
-#             best_loss = val_loss
-#             validate_accuracy = val_accuracy
-#             best_weight = weight
-#             no_improvement_count = 0
-#         else:
-#             no_improvement_count += 1
-#             if no_improvement_count >= patience:
-#                 print("Early stopping triggered.")
-#                 break
+            accuracy_of_correct_prediction = correct_prediction_count / len(X_Train)
+            
+            a,b, accuracy_testing = self.testing_model(X_Test=X_Test, Y_Test=Y_Test, weight_blue= weight_blue, weight_green=weight_green, weight_red=weight_red, weight_yellow=weight_yellow)
+            
+            if debug:
+                print(F" Loss: { sum(each_epoch_loss) / len(each_epoch_loss)} time: {e} Accuracy of training: {accuracy_of_correct_prediction} ||| Accuracy of Testing {accuracy_testing}")
+            
+            # if e == 2:
+            #     break
+            
+        return weight_red , weight_blue , weight_green, weight_yellow
 
-#     return best_weight
 
-# def gradient_descent(features, target, prediction, alpha, weight, lambda_reg):
-#     gradient = np.dot(features, (target - prediction))
-#     new_weights = weight + alpha * gradient - alpha * lambda_reg * weight
-#     return new_weights 
+    def classified_values(self, prediction):
+        pass
+        
 
-# def validate_model(encoding, target, weight):
-#     total_loss = 0
-#     true_count = 0
-#     for x, t in zip(encoding, target):
-#         prediction = sigmoid_function(weight, x)
-#         true_count += 1 if classified_values(prediction) == t else 0
-#         loss = cross_entropy_loss(t, prediction)
-#         total_loss += loss
-#     avg_loss = total_loss / len(target)
-#     avg_accuracy = true_count / len(target)
-#     return avg_loss, avg_accuracy
+    def testing_model(self, X_Test, Y_Test, weight_red , weight_blue , weight_green, weight_yellow):
+        new_y = []
+        new_x = []
+        i = 0
+        correct_prediction_count = 0
 
-            # val_x, val_y, accuracy = test_model(validation_x, validation_y, weight)
-            # if accuracy > validateAccuracy:
-            #     validateAccuracy = accuracy
-            #     bestWeight = weight
-            #     print(bestWeight)
+        # Iterating through zip of X-Test, and Y-Test
+        for x_vector, y_vector in zip(X_Test, Y_Test):
+            prediction_list = self.softmax_function(weight_blue, weight_yellow, weight_green, weight_red , x_vector )
+            correct_prediction_count += 1  if np.argmax(prediction_list) == np.argmax(y_vector) else 0
+            loss = self.cross_entropy_loss( prediction_list , y_vector)
+            new_y.append(loss)
+            new_x.append(i)
+            i+=1
+
+        avg = correct_prediction_count / len(Y_Test)
+        # print(f"Accuracy for Testing Set {avg}")
+        return new_x, new_y, avg
+
+    def cal_z(self, weight, x_vector):
+        return np.dot(weight, x_vector)
+    
+    def softmax_function(self, WB, WY, WG, WR, x_vector):
+        # Calculating dot product of red wire weight and x vector
+        exp_red = np.exp(self.cal_z(WR, x_vector))
+
+        # Calculating dot product of green wire weight and x vector
+        exp_green = np.exp(self.cal_z(WG, x_vector))
+
+        # Calculating dot product of blue wire weight and x vector
+        exp_blue = np.exp(self.cal_z(WB, x_vector))
+
+        # Calculating dot product of yellow wire weight and x vector
+        exp_yellow = np.exp(self.cal_z(WY, x_vector))
+
+        # Calculating total sum of all wire
+        Total_sum = exp_red + exp_blue + exp_green + exp_yellow
+
+        function_green = float(exp_green / Total_sum)
+        function_blue = float(exp_blue / Total_sum)
+        function_yellow = float(exp_yellow / Total_sum)
+        function_red = float(exp_red / Total_sum)
+
+        
+        return [function_green, function_blue, function_yellow, function_red]
+
+    def cross_entropy_loss(self, predicted_values, target_values):
+        loss = -np.sum(target_values * np.log(predicted_values))
+        # print("Prediction:- ",predicted_values)
+        # print("Target    :-", target_values)
+        # print("Loss      :-", loss)
+        # print()
+        return loss
+
+    def gradient_descent(self, weight_blue, weight_yellow, weight_green, weight_red, x_vector, learning_rate, predicted_values, target):
+        # GBYR
+
+        error = np.array(predicted_values) - np.array(target)
+
+        x_vector = np.array(x_vector)
+
+        # Update weights for each class
+        new_weight_green = weight_green - (learning_rate * x_vector * error[0])
+        new_weight_blue = weight_blue - (learning_rate * x_vector * error[1])
+        new_weight_yellow = weight_yellow - (learning_rate * x_vector * error[2])
+        new_weight_red = weight_red - (learning_rate * x_vector * error[3])
+
+        return new_weight_green, new_weight_blue, new_weight_yellow, new_weight_red
+
+
+
+
+

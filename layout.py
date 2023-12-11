@@ -1,7 +1,6 @@
 import random
 import AI_Learn
 import pandas as pd
-logistic_reg = AI_Learn.LogisticRegression()
 
 # 🟦
 # 🟩
@@ -39,7 +38,7 @@ class creatingLayout():
             print()
 
         # print(self.color_combinations)
-        return self.grid #, self.wiredGrid_status_is
+        return self.grid , self.color_combinations
 
     def getRow(self, D):
         pick_row = random.randint(0, D - 1)
@@ -76,25 +75,27 @@ class creatingLayout():
         return indexes[0]
 
 
-def generate_data(dataSet , gridSize, trainingSize, testSize):
+def generate_data(dataSet , gridSize):
     result_list = []
     try :
         for i in range(dataSet):
             # print("-------------------------------------------------")
             layout = creatingLayout()
-            grid = layout.wiredGrid(gridSize)
+            grid , color_order = layout.wiredGrid(gridSize)
             status = layout.wiredGrid_status_is()
-            result_dict = {'Encoding': logistic_reg.encoding(grid), 'Status': status}
+            result_dict = {'encoding': AI_Learn.encoding(grid), 
+                           'binary_classification': status, 
+                           'multi_classification': AI_Learn.order_encoding(color_order) }
             result_list.append(result_dict)
 
-            if i == 3999:
+            if i == 1999:
                 result_df = pd.DataFrame(result_list)
-                result_df.to_excel('DataSets/encoding_results.xlsx', index=False)
+                result_df.to_excel('DataSets/training_dataSet.xlsx', index=False)
                 result_list = []
 
             if i == dataSet - 1:
                 result_df = pd.DataFrame(result_list)
-                result_df.to_excel('DataSets/encoding_test.xlsx', index=False)
+                result_df.to_excel('DataSets/testing_dataSet.xlsx', index=False)
     
     except Exception as e:
         print("Error in Layout ", e)
