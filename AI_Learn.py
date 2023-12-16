@@ -257,13 +257,15 @@ class LogisticRegression():
             y_axis_vali.append(validation_loss)
             
             if debug:
-                print(f"Loss: { round(float( y_axis_train[e]),5) } at time {e}  Accuracy: {round(train_accuracy_epoch - 1e-6 , 5) }")
-            
+                # print(f"Loss: { round(float( y_axis_train[e]),5) } at time {e}  Accuracy: {round(train_accuracy_epoch - 1e-5 , 5) }")
+                print(f"Loss: {round(float(y_axis_train[e]), 5):<10} at time {e:<3} Accuracy: {round(train_accuracy_epoch - 1e-5, 5):<10}")
             if validation_loss < best_loss:
                 best_loss = validation_loss
                 validate_accuracy = validation_accuracy
                 best_weight = weight
                 no_improvement_count = 0
+                if float(y_axis_train[e]) == 1.0:
+                    break
             else:
                 no_improvement_count += 1
                 if no_improvement_count >= patience:
@@ -274,12 +276,12 @@ class LogisticRegression():
             print("***********************************************************")
             print("    LOGISTIC REGRESSION MODEL TRAINING REPORT          ")
             print("***********************************************************")
-            print("Accuracy for Training data Set   : ", round(train_accuracy_epoch- 1e-6, 5))
+            print("Accuracy for Training data Set   : ", round(train_accuracy_epoch- 1e-5, 5))
             print("Accuracy for Validation data Set : ", round(validate_accuracy,5))
             print("***********************************************************")
             print()
         
-        return best_weight, x_axis , y_axis_train , train_accuracy,  y_axis_vali  , v_accuracy , validate_accuracy, (train_accuracy_epoch - 1e-6)
+        return best_weight, x_axis , y_axis_train , train_accuracy,  y_axis_vali  , v_accuracy , validate_accuracy, (train_accuracy_epoch - 1e-5)
 
     # Classiication of prediction
     def classified_values(self, prediction):
@@ -376,7 +378,7 @@ class LogisticRegression():
         plt.bar(categories, values, color=['red', 'grey', 'pink'],width= 0.5)
         plt.xlabel('Phase')
         plt.ylabel('Accuracy')
-        plt.title(' Accuracy Benchmarks')
+        plt.title(' Close this Graph to Finish excuting Further \n\n\n Accuracy Benchmarks')
         for i, value in enumerate(values):
             plt.text(i, value, str(value), ha='center', va='bottom')
         plt.show()
@@ -475,14 +477,14 @@ class SoftMax_regression():
                     break
         
             if debug:         
-                print(f"Epoch: {e} Loss: {round(sum(each_epoch_loss) / len(each_epoch_loss),5)} "
-                    f"Training Accuracy: {round(train_accuracy_epoch - 1e-5 , 5)} ")
+                print(f"Epoch: {e:<3} Loss: {round(sum(each_epoch_loss) / len(each_epoch_loss), 5):<10} "
+          f"Training Accuracy: {round(train_accuracy_epoch - 1e-5, 5):<10}")
         
         if PrintReport:        
             print("***********************************************************")
             print("    SoftMax REGRESSION MODEL TRAINING REPORT          ")
             print("***********************************************************")
-            print("Accuracy for Training data Set   : ", round(train_accuracy_epoch- 1e-6, 5))
+            print("Accuracy for Training data Set   : ", round(train_accuracy_epoch- 1e-5, 5))
             print("Accuracy for Validation data Set : ", round(validate_accuracy,5))
             print("***********************************************************")
             print()
@@ -574,7 +576,7 @@ class SoftMax_regression():
         plt.bar(categories, values, color=['red', 'grey', 'pink'],width= 0.5)
         plt.xlabel('Phase')
         plt.ylabel('Accuracy')
-        plt.title(' Accuracy Benchmarks')
+        plt.title(' Close this Graph to Finish excuting Further \n\n\n Accuracy Benchmarks')
         for i, value in enumerate(values):
             plt.text(i, value, str(value), ha='center', va='bottom')
         plt.show()
